@@ -29,12 +29,12 @@ jobs:
 
     - name: Initialize Bubblewrap Project
       run: |
-        bubblewrap init --manifest="https://opencut.app/manifest.json" --directory="./android-app"
+        yes n | bubblewrap init --manifest="https://opencut.app/manifest.json" --directory="./android-app" --skippwavalidation
 
     - name: Build APK
       run: |
         cd android-app
-        bubblewrap build
+        yes | bubblewrap build
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
