@@ -18,26 +18,49 @@ jobs:
       with:
         node-version: 20
 
-    - name: Install Bubblewrap CLI
-      run: npm install -g @bubblewrap/cli
-
     - name: Set up Java JDK
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Initialize Bubblewrap Project
-      run: |
-        yes n | bubblewrap init --manifest="https://opencut.app/manifest.json" --directory="./android-app" --skippwavalidation
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
 
-    - name: Build APK
+    - name: Create Web App Wrapper
       run: |
-        cd android-app
-        yes | bubblewrap build
+        mkdir android-wrapper
+        cd android-wrapper
+        npm init -y
+        npm install @capacitor/cli @capacitor/core @capacitor/android
+        npx cap init OpenCut app.opencut.app --web-dir dist
+        mkdir dist
+        cat << 'EOF' > dist/index.html
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>OpenCut</title>
+          <style>
+            body, html, iframe { margin: 0; padding: 0; height: 100%; width: 100%; border: none; overflow: hidden; }
+          </style>
+        </head>
+        <body>
+          <iframe src="https://opencut.app"></iframe>
+        </body>
+        </html>
+        EOF
+        npx cap add android
+        npx cap copy
+
+    - name: Build Android APK
+      run: |
+        cd android-wrapper/android
+        chmod +x gradlew
+        ./gradlew assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: OpenCut-Android-APK
-        path: android-app/*.apk
+        path: android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk
